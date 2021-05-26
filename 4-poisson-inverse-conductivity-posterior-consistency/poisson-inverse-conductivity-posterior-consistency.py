@@ -46,10 +46,6 @@
 # Since I am comparing to a solution $u_true$ in CG2 space I expect, at best, that we will converge to $u_true$ when we have, on average, enough points per cell to fully specify the lagrange polynomials in that cell.
 # Were we in CG1 this would be 3 points per cell (I can't remember how many we would need for CG2!) to give convergence if those measurements had no noise.
 # Since our measurements are noisy I do not expect actual convergence, but I anticipate some slowing in convergence.
-#
-# ## Change to the misfit functional
-#
-# To speed things up (see `poisson-inverse-conductivity-investigation.ipynb`) I multiply the misfit through by $\sigma^2$.
 
 # # Setup
 
