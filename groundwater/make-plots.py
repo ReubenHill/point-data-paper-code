@@ -1,0 +1,89 @@
+import argparse
+import json
+import numpy as np
+import matplotlib.pyplot as plt
+import firedrake
+from firedrake import Constant, conditional
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--input")
+args = parser.parse_args()
+
+with firedrake.CheckpointFile(args.input, "r") as chk:
+    timestep = chk.get_attr("/", "timestep")
+    num_steps = chk.get_attr("/", "num-steps")
+
+    mesh = chk.load_mesh()
+    φs = [
+        chk.load_function(mesh, name="hydraulic-head", idx=idx)
+        for idx in range(num_steps + 1)
+    ]
+
+fig, ax = plt.subplots()
+ax.set_title("Aquifer at 1.5 days simulation time")
+ax.set_aspect("equal")
+ax.set_xlabel("easting (m)")
+ax.set_ylabel("northing")
+colors = firedrake.tripcolor(φs[-1], axes=ax)
+fig.colorbar(colors, label="hydraulic head (m)")
+fig.savefig("hydraulic-head-final.png", dpi=150)
+
+
+Lx, Ly = 6500.0, 4500.0
+x = firedrake.SpatialCoordinate(mesh)
+L_1 = Constant(2500.0)
+L_2 = Constant(4500.0)
+S = Constant(0.0001)
+T_1 = Constant(500)
+T_2 = Constant(1000.0)
+T_3 = Constant(2000.0)
+expr = conditional(
+    x[0] < L_1,
+    T_1,
+    conditional(
+        x[0] < L_2,
+        T_2,
+        T_3,
+    )
+)
+Q = firedrake.FunctionSpace(mesh, "DG", 0)
+T = firedrake.project(expr, Q)
+
+fig, ax = plt.subplots()
+ax.set_title("Exact aquifer transmissivity")
+ax.set_aspect("equal")
+ax.set_xlabel("easting (m)")
+ax.set_ylabel("northing")
+colors = firedrake.tripcolor(T, axes=ax)
+fig.colorbar(colors, label="m${}^2$ / day")
+fig.savefig("transmissivity-exact.png", dpi=150)
+
+
+experiments = []
+for filename in [f"experiment{index}.json" for index in [2, 4]]:
+    with open(filename, "r") as input_file:
+        experiments.append(json.load(input_file))
+
+fig, ax = plt.subplots(figsize=(6.4, 3.6))
+ax.set_title("Inverse problem solution spread")
+ax.set_xlabel("transmissivity (m${}^2$/day)")
+ax.set_ylabel("probability density")
+colors = ["tab:blue", "tab:orange"]
+labels = ["6 wells, 3 times", "3 wells, 6 times"]
+for experiment, color, label in zip(experiments, colors, labels):
+    for index in range(3):
+        data = np.array(experiment["transmissivities"])
+        mean = data[:, index].mean()
+        std = data[:, index].std()
+        tmin, tmax = mean - 10 * std, mean + 10 * std
+        ts = np.linspace(tmin, tmax, 200)
+        ps = np.exp(-(ts - mean)**2 / (2 * std**2)) / np.sqrt(2 * np.pi * std**2)
+        ax.plot(ts, ps, color=color, label=label)
+
+# Thanks to https://stackoverflow.com/a/13589144/
+handles, labels = ax.get_legend_handles_labels()
+by_label = dict(zip(labels, handles))
+ax.legend(by_label.values(), by_label.keys())
+
+filename = "transmissivity-probability-densities.png"
+fig.savefig(filename, dpi=150, bbox_inches="tight")
