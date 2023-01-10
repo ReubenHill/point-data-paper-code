@@ -179,3 +179,7 @@ with firedrake.CheckpointFile(args.output, "w") as chk:
     chk.save_mesh(mesh)
     chk.save_function(u, name=f"velocity{args.suffix}")
     chk.save_function(θ, name=f"log_fluidity{args.suffix}")
+
+    f = chk.h5pyfile
+    f.create_dataset("all_indices", data=all_indices)
+    f.create_dataset("training_indices", data=indices)
