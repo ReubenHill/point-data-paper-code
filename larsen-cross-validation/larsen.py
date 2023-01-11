@@ -11,26 +11,17 @@ from icepack.statistics import StatisticsProblem, MaximumProbabilityEstimator
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--regularization", type=float, default=2.5e3)
-parser.add_argument("--random-seed", type=int, default=1729)
-parser.add_argument("--data-fraction", type=float, default=0.05)
-parser.add_argument("--output", default="larsen.h5")
-parser.add_argument("--suffix", default="")
+parser.add_argument("--input", default="larsen.h5")
 args = parser.parse_args()
 
 
-# Fetch a GeoJSON file describing the outline of the domain, convert it to
-# gmsh's input format, generate a mesh, and make some function spaces.
-outline_filename = icepack.datasets.fetch_outline("larsen-2015")
-with open(outline_filename, "r") as outline_file:
-    outline = geojson.load(outline_file)
+# Load in the mesh and retrieve the indices of the gridded data that we'll use
+# for model fitting
+with firedrake.CheckpointFile(args.input, "r") as chk:
+    mesh = chk.load_mesh()
+    training_indices = np.array(chk.h5pyfile.get("training_indices"))
+    N = len(training_indices)
 
-geometry = icepack.meshing.collection_to_geo(outline)
-with open("larsen.geo", "w") as geo_file:
-    geo_file.write(geometry.get_code())
-
-command = "gmsh -2 -format msh2 -v 2 -o larsen.msh larsen.geo"
-subprocess.run(command.split())
-mesh = firedrake.Mesh("larsen.msh")
 Q = firedrake.FunctionSpace(mesh, "CG", 2)
 V = firedrake.VectorFunctionSpace(mesh, "CG", 2)
 
@@ -48,7 +39,10 @@ F = firedrake.derivative(J, h)
 firedrake.solve(F == 0, h)
 
 
-# Fetch some velocity data (ask my why it's 6GB).
+# Fetch some velocity data (ask my why it's 6GB)
+outline_filename = icepack.datasets.fetch_outline("larsen-2015")
+with open(outline_filename, "r") as outline_file:
+    outline = geojson.load(outline_file)
 coords = np.array(list(geojson.utils.coords(outline)))
 delta = 10e3
 xmin, xmax = coords[:, 0].min() - delta, coords[:, 0].max() + delta
@@ -62,18 +56,7 @@ u_initial = icepack.interpolate((dataset["VX"], dataset["VY"]), V)
 
 # Randomly select a sub-sample of points and create the observational data
 X, Y = dataset["x"], dataset["y"]
-all_indices = np.array(
-    [
-        (i, j)
-        for i, y in enumerate(Y) for j, x in enumerate(X)
-        if mesh.locate_cell((x, y))
-    ]
-)
-rng = np.random.default_rng(seed=args.random_seed)
-N = int(args.data_fraction * len(all_indices))
-indices = rng.choice(all_indices, size=N, axis=0)
-
-xs = np.array([(X[j], Y[i]) for i, j in indices])
+xs = np.array([(X[j], Y[i]) for i, j in training_indices])
 point_set = firedrake.VertexOnlyMesh(mesh, xs)
 V_obs = firedrake.VectorFunctionSpace(point_set, "DG", 0, dim=2)
 Q_obs = firedrake.FunctionSpace(point_set, "DG", 0)
@@ -83,9 +66,9 @@ u_obs = firedrake.Function(V_obs)
 σ_y = firedrake.Function(Q_obs)
 
 vx, vy = dataset["VX"], dataset["VY"]
-u_obs.dat.data[:] = np.array([(float(vx[i, j]), float(vy[i, j])) for i, j in indices])
-σ_x.dat.data[:] = np.array([float(dataset["ERRX"][i, j]) for i, j in indices])
-σ_y.dat.data[:] = np.array([float(dataset["ERRY"][i, j]) for i, j in indices])
+u_obs.dat.data[:] = np.array([(float(vx[i, j]), float(vy[i, j])) for i, j in training_indices])
+σ_x.dat.data[:] = np.array([float(dataset["ERRX"][i, j]) for i, j in training_indices])
+σ_y.dat.data[:] = np.array([float(dataset["ERRY"][i, j]) for i, j in training_indices])
 
 
 # Define the physics model.
@@ -175,11 +158,6 @@ u = simulation(θ)
 
 
 # Write the results to a file.
-with firedrake.CheckpointFile(args.output, "w") as chk:
-    chk.save_mesh(mesh)
-    chk.save_function(u, name=f"velocity{args.suffix}")
-    chk.save_function(θ, name=f"log_fluidity{args.suffix}")
-
-    f = chk.h5pyfile
-    f.create_dataset("all_indices", data=all_indices)
-    f.create_dataset("training_indices", data=indices)
+with firedrake.CheckpointFile(args.input, "a") as chk:
+    chk.save_function(u, name=f"velocity-{args.regularization}")
+    chk.save_function(θ, name=f"log_fluidity-{args.regularization}")
