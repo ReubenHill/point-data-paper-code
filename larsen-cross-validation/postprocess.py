@@ -12,7 +12,7 @@ import icepack
 θs = []
 us = []
 
-with firedrake.CheckpointFile("larsen.h5") as chk:
+with firedrake.CheckpointFile("larsen.h5", "r") as chk:
     mesh = chk.load_mesh()
     for α in αs:
         θs.append(chk.load_function(mesh, f"log_fluidity-{α}"))
@@ -54,13 +54,13 @@ u_obs = firedrake.Function(V_obs)
 σ_y = firedrake.Function(Q_obs)
 
 vx, vy = dataset["VX"], dataset["VY"]
-u_obs.dat.data[:] = np.array([(float(vx[i, j]), float(vy[i, j])) for i, j in training_indices])
-σ_x.dat.data[:] = np.array([float(dataset["ERRX"][i, j]) for i, j in training_indices])
-σ_y.dat.data[:] = np.array([float(dataset["ERRY"][i, j]) for i, j in training_indices])
+u_obs.dat.data[:] = np.array([(float(vx[i, j]), float(vy[i, j])) for i, j in test_indices])
+σ_x.dat.data[:] = np.array([float(dataset["ERRX"][i, j]) for i, j in test_indices])
+σ_y.dat.data[:] = np.array([float(dataset["ERRY"][i, j]) for i, j in test_indices])
 
 
 def loss_functional(u):
-    δu = firedrake.interpolate(u, V_obs) - u_obs)
+    δu = firedrake.interpolate(u, V_obs) - u_obs
     return 0.5 / Constant(N) * ((δu[0] / σ_x)**2 + (δu[1] / σ_y)**2) * dx
 
 
