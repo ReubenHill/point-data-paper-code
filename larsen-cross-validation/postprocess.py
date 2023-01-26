@@ -1,3 +1,4 @@
+import json
 import numpy as np
 import geojson
 import xarray
@@ -64,5 +65,6 @@ def loss_functional(u):
     return 0.5 / Constant(N) * ((δu[0] / σ_x)**2 + (δu[1] / σ_y)**2) * dx
 
 
-for u in us:
-    print(assemble(loss_functional(u)))
+test_errors = [assemble(loss_functional(u)) for u in us]
+with open("test-errors.json", "w") as output_file:
+    json.dump(list(zip(αs, test_errors)), output_file)
