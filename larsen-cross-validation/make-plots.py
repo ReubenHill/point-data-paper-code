@@ -18,7 +18,7 @@ fig.savefig("xval-test-errors.png", dpi=150)
 
 
 # Plot some values of the inferred log-fluidity
-αs = [2500.0, 3000.0, 3500.0, 4000.0, 4500.0, 5000.0]
+αs = np.linspace(2750.0, 5000.0, 10)
 θs = []
 
 with firedrake.CheckpointFile("larsen.h5", "r") as chk:
@@ -55,12 +55,12 @@ kw = {
 }
 for ax in axes.flatten():
     ax.imshow(image, **kw)
-firedrake.tripcolor(θs[1], vmin=-5, vmax=+5, axes=axes[0])
+firedrake.tripcolor(θs[2], vmin=-5, vmax=+5, axes=axes[0])
 firedrake.tripcolor(θs[-1], vmin=-5, vmax=+5, axes=axes[1])
 axes[0].set_xlabel("easting (meters)")
 axes[0].set_ylabel("northing (meters)")
 axes[1].get_xaxis().set_visible(False)
-axes[0].set_title("$\\alpha$ = 3km")
-axes[1].set_title("$\\alpha$ = 5km")
+axes[0].set_title(f"$\\alpha$ = {αs[2] / 1e3}km")
+axes[1].set_title(f"$\\alpha$ = {αs[-1] / 1e3}km")
 fig.suptitle("Log-fluidities at different regularization")
 fig.savefig("xval-log-fluidities.png", dpi=150, bbox_inches="tight")

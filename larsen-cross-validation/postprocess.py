@@ -9,7 +9,7 @@ import icepack
 
 # Load the computed fluidity and velocity fields
 # TODO: stop hard-coding this
-αs = [2500.0, 3000.0, 3500.0, 4000.0, 4500.0, 5000.0]
+αs = np.linspace(2750.0, 5000.0, 10)
 θs = []
 us = []
 
