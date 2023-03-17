@@ -25,6 +25,23 @@ ax.set_aspect("equal")
 ax.set_xlabel("easting (m)")
 ax.set_ylabel("northing")
 colors = firedrake.tripcolor(φs[-1], axes=ax)
+
+Lx, Ly = 6500.0, 4500.0
+L_1 = 2500.0
+L_2 = 4500.0
+
+for num_observation_wells, color in zip([3, 6], ["tab:red", "tab:orange"]):
+    N = num_observation_wells + 1
+    Y = np.array([Ly * i / N for i in range(1, N)])
+    X1 = L_1 / 2 * np.ones(N - 1)
+    X2 = (L_1 + L_2) / 2 * np.ones(N - 1)
+    X3 = (L_2 + Lx) / 2 * np.ones(N - 1)
+    xs1 = np.column_stack((X1, Y))
+    xs2 = np.column_stack((X2, Y))
+    xs3 = np.column_stack((X3, Y))
+    xs = np.vstack((xs1, xs2, xs3))
+    ax.scatter(xs[:, 0], xs[:, 1], 2, color=color)
+
 fig.colorbar(colors, label="hydraulic head (m)")
 fig.savefig("hydraulic-head-final.png", dpi=150)
 
