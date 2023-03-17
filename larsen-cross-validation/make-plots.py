@@ -15,7 +15,7 @@ ax.scatter(test_errors[:, 0], test_errors[:, 1])
 ax.set_xlabel("Regularization parameter (meters)")
 ax.set_ylabel("Mean-square error on test set")
 ax.set_title("Cross-validation error")
-fig.savefig("xval-test-errors.png", dpi=150)
+fig.savefig("xval-test-errors.pdf")
 
 
 # Get the simulation data
@@ -75,7 +75,7 @@ axes[1].get_xaxis().set_visible(False)
 axes[0].set_title(f"$\\alpha$ = {αs[2] / 1e3}km")
 axes[1].set_title(f"$\\alpha$ = {αs[-1] / 1e3}km")
 fig.suptitle("Log-fluidities at different regularization")
-fig.savefig("xval-log-fluidities.png", dpi=150, bbox_inches="tight")
+fig.savefig("xval-log-fluidities.pdf", bbox_inches="tight")
 
 # Show where the training points are
 fig, axes = plt.subplots()
@@ -88,7 +88,7 @@ axes.set_ylim((bymin, bymax))
 firedrake.triplot(mesh, axes=axes)
 axes.scatter(xs[:, 0], xs[:, 1], marker=".")
 axes.set_title("Training point locations")
-fig.savefig("xval-training-points.png", dpi=150, bbox_inches="tight")
+fig.savefig("xval-training-points.pdf", bbox_inches="tight")
 
 fig, axes = plt.subplots()
 axes.set_aspect("equal")
@@ -96,4 +96,4 @@ axes.imshow(image, **kw)
 axes.plot([bxmin, bxmax, bxmax, bxmin, bxmin], [bymin, bymin, bymax, bymax, bymin])
 firedrake.triplot(mesh, interior_kw={"linewidth": 0.0}, axes=axes)
 axes.set_title("Larsen C Ice Shelf")
-fig.savefig("larsen-c.png")
+fig.savefig("larsen-c.pdf")
