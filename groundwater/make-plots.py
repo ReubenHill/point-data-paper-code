@@ -30,7 +30,7 @@ Lx, Ly = 6500.0, 4500.0
 L_1 = 2500.0
 L_2 = 4500.0
 
-for num_observation_wells, color in zip([3, 6], ["tab:red", "tab:orange"]):
+for num_observation_wells, marker, color in zip([3, 6], ["^", "*"], ["tab:red", "k"]):
     N = num_observation_wells + 1
     Y = np.array([Ly * i / N for i in range(1, N)])
     X1 = L_1 / 2 * np.ones(N - 1)
@@ -40,8 +40,10 @@ for num_observation_wells, color in zip([3, 6], ["tab:red", "tab:orange"]):
     xs2 = np.column_stack((X2, Y))
     xs3 = np.column_stack((X3, Y))
     xs = np.vstack((xs1, xs2, xs3))
-    ax.scatter(xs[:, 0], xs[:, 1], 2, color=color)
+    label = f"num wells = {3 * num_observation_wells}"
+    ax.scatter(xs[:, 0], xs[:, 1], 8, marker=marker, label=label, color=color)
 
+ax.legend(bbox_to_anchor=(-0.1, -0.1), loc="upper left", borderaxespad=0)
 fig.colorbar(colors, label="hydraulic head (m)")
 fig.savefig("hydraulic-head-final.png", dpi=150)
 
