@@ -25,8 +25,27 @@ ax.set_aspect("equal")
 ax.set_xlabel("easting (m)")
 ax.set_ylabel("northing")
 colors = firedrake.tripcolor(φs[-1], axes=ax)
+
+Lx, Ly = 6500.0, 4500.0
+L_1 = 2500.0
+L_2 = 4500.0
+
+for num_observation_wells, marker, color in zip([3, 6], ["^", "*"], ["tab:red", "k"]):
+    N = num_observation_wells + 1
+    Y = np.array([Ly * i / N for i in range(1, N)])
+    X1 = L_1 / 2 * np.ones(N - 1)
+    X2 = (L_1 + L_2) / 2 * np.ones(N - 1)
+    X3 = (L_2 + Lx) / 2 * np.ones(N - 1)
+    xs1 = np.column_stack((X1, Y))
+    xs2 = np.column_stack((X2, Y))
+    xs3 = np.column_stack((X3, Y))
+    xs = np.vstack((xs1, xs2, xs3))
+    label = f"num wells = {num_observation_wells}"
+    ax.scatter(xs[:, 0], xs[:, 1], 8, marker=marker, label=label, color=color)
+
+ax.legend(bbox_to_anchor=(-0.1, -0.1), loc="upper left", borderaxespad=0)
 fig.colorbar(colors, label="hydraulic head (m)")
-fig.savefig("hydraulic-head-final.png", dpi=150)
+fig.savefig("hydraulic-head-final.pdf")
 
 
 Lx, Ly = 6500.0, 4500.0
@@ -56,7 +75,7 @@ ax.set_xlabel("easting (m)")
 ax.set_ylabel("northing")
 colors = firedrake.tripcolor(T, axes=ax)
 fig.colorbar(colors, label="m${}^2$ / day")
-fig.savefig("transmissivity-exact.png", dpi=150)
+fig.savefig("transmissivity-exact.pdf")
 
 
 experiments = []
@@ -85,5 +104,4 @@ handles, labels = ax.get_legend_handles_labels()
 by_label = dict(zip(labels, handles))
 ax.legend(by_label.values(), by_label.keys())
 
-filename = "transmissivity-probability-densities.png"
-fig.savefig(filename, dpi=150, bbox_inches="tight")
+fig.savefig("transmissivity-probability-densities.pdf", bbox_inches="tight")
