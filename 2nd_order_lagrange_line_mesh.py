@@ -6,9 +6,6 @@ from scipy.interpolate import lagrange
 from numpy.polynomial.polynomial import Polynomial
 import matplotlib.pyplot as plt
 
-# from https://matplotlib.org/stable/gallery/lines_bars_and_markers/linestyles.html
-longdash = (5, (10, 3))
-
 x = np.array([0, 0.5, 1])
 y0 = np.array([1, 0, 0])
 poly0 = lagrange(x, y0)
@@ -34,20 +31,26 @@ phi3[x_new >= 1.0] = phi1[x_new <= 1.0]
 phi4 = np.zeros_like(phi0)
 phi4[x_new >= 1.0] = phi2[x_new <= 1.0]
 phisum = phi0 + phi1 + phi2 + phi3 + phi4
+
+# from https://matplotlib.org/stable/gallery/lines_bars_and_markers/linestyles.html
+longdashed = (5, (10, 3))
+densely_dashdotted = (0, (3, 1, 1, 1))
+
 ax.plot(x_new, phi0, label="$\phi_0$", linestyle="-")
 ax.plot(x_new, phi1, label="$\phi_1$", linestyle="--")
 ax.plot(x_new, phi2, label="$\phi_2$", linestyle=":")
 ax.plot(x_new, phi3, label="$\phi_3$", linestyle="-.")
-ax.plot(x_new, phi4, label="$\phi_4$", linestyle=longdash)
-ax.plot(x_new, phisum, label="$\sum_i \phi_i$", linestyle="-")
+ax.plot(x_new, phi4, label="$\phi_4$", linestyle=longdashed)
+ax.plot(x_new, phisum, label="$\sum_i \phi_i$", linestyle=densely_dashdotted)
 ax.set_xticks([0, 1, 2])
 ax.set_yticks([0, 1])
 ax.set_xlim([-0.05, 2.05])
-ax.set_xlabel("X")
-ax.set_ylabel("$\phi_i(X)$")
+ax.set_xlabel("x")
+ax.set_ylabel("$\phi_i(x)$")
 
 ax.grid()
 ax.legend()
 # plt.show()
 ax.set_position([0, 0, 1, 1], which="both")
-plt.savefig("2nd_order_lagrange_line.pdf", transparent=True, bbox_inches="tight")
+fig.set_size_inches(8, 4)
+plt.savefig("2nd_order_lagrange_line_mesh.pdf", transparent=True, bbox_inches="tight")
