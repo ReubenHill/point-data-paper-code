@@ -15,19 +15,19 @@ def poisson_point_eval(coords):
     firedrake.function.Function
         A field containing the point evaluatations.
     """
-    m = UnitSquareMesh(20, 20)
-    V = FunctionSpace(m, family="CG", degree=2)
-    v = TestFunction(V)
-    u = Function(V)
+    omega = UnitSquareMesh(20, 20)
+    P2CG = FunctionSpace(omega, family="CG", degree=2)
+    u = Function(P2CG)
+    v = TestFunction(P2CG)
 
     # Random forcing Function with values in [1, 2].
-    f = RandomGenerator(PCG64(seed=0)).beta(V, 1.0, 2.0)
+    f = RandomGenerator(PCG64(seed=0)).beta(P2CG, 1.0, 2.0)
 
-    bc = DirichletBC(V, 0, "on_boundary")
     F = (inner(grad(u), grad(v)) - f * v) * dx
+    bc = DirichletBC(P2CG, 0, "on_boundary")
     solve(F == 0, u, bc)
 
-    point_cloud = VertexOnlyMesh(m, coords)
-    P0DG = FunctionSpace(point_cloud, "DG", 0)
+    omega_v = VertexOnlyMesh(omega, coords)
+    P0DG = FunctionSpace(omega_v, "DG", 0)
 
     return interpolate(u, P0DG)
